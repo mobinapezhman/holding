@@ -1,0 +1,487 @@
+﻿@using Newtonsoft.Json.Linq
+
+@{
+    ViewData["Title"] = "Home Page";
+
+}
+<script>
+    const createPieChart = (divId, dataFieldsValue, dataFieldsCategory, data) => {
+        function am4themes_myTheme(target) {
+            if (target instanceof am4core.ColorSet) {
+                target.list = [
+                    am4core.color("#7eb0d5"),
+                    am4core.color("#fd7f6f"),
+                    am4core.color("#8bd3c7"),
+                    am4core.color("#bd7ebe"),
+                    am4core.color("#ffb55a"),
+                    am4core.color("#fdcce5"),
+                ]
+            }
+        }
+        // Themes begin
+        am4core.useTheme(am4themes_myTheme);
+        am4core.useTheme(am4themes_animated);
+        // Themes end
+
+        // Create chart instance
+        // Create chart instance
+        var chart = am4core.create(divId, am4charts.PieChart);
+        // Remove logo
+        if (chart.logo) {
+            chart.logo.disabled = true
+        }
+        // Add data
+        chart.data = data
+        chart.radius = am4core.percent(90)
+        // Add and configure Series
+        var pieSeries = chart.series.push(new am4charts.PieSeries());
+        pieSeries.dataFields.value = dataFieldsValue;
+        pieSeries.dataFields.category = dataFieldsCategory;
+        pieSeries.slices.template.stroke = am4core.color("#fff");
+        pieSeries.slices.template.strokeOpacity = 1;
+
+
+
+        pieSeries.ticks.template.disabled = true;
+        pieSeries.alignLabels = false;
+        pieSeries.labels.template.text = "[bold]{category}";
+        pieSeries.labels.template.radius = am4core.percent(-40);
+        pieSeries.labels.template.fill = am4core.color("black");
+        pieSeries.labels.template.fontSize = 11
+        pieSeries.labels.template.adapter.add("radius", function (radius, target) {
+            if (target.dataItem && (target.dataItem.values.value.percent < 12)) {
+                return 0;
+            }
+            return radius;
+        })
+        pieSeries.labels.template.adapter.add("fill", function (color, target) {
+            if (target.dataItem && (target.dataItem.values.value.percent < 12)) {
+                return am4core.color("#000");
+            }
+            return color;
+        })
+    }
+
+
+
+
+    const handleGauge = (id, text) => {
+        let gaugeTitles = document.querySelectorAll(".title-gauge");
+        for (let i = 0; i < gaugeTitles.length; i++) {
+            let titleDiv = gaugeTitles[i];
+            let f = titleDiv.id.toString() == "gauge_title_" + id.toString();
+            if (titleDiv.id.toString() == "gauge_title_" + id.toString()) {
+                //change color
+                if (!titleDiv.classList.contains('active-gauge')) {
+                    titleDiv.classList.add("active-gauge")
+                    $('.hr-text-div1').html(text);
+
+                    //service id -> piechart html text
+                    $.ajax({
+                        type: 'GET',
+                        url: `/Home/GetDataPiechart/${id}`,
+                        dataType: "JSON",
+                        success: function (r) {
+                            console.log("RESULT", r);
+                            $("#pie-div").html('');
+                            $('#pie-div').append(`<div id='${r.divId}' style='height:550px;margin-top:-10px'></div>`);
+                            createPieChart(r.divId, r.dataFieldsValue, r.dataFieldsCategory, r.data);
+                            console.log("RESULT", r);
+
+                        },
+                        error: function (xhr, status, error) {
+                            var err = eval("(" + xhr.responseText + ")");
+                            alert(err.Message);
+                        }
+                    });
+
+                }
+            }
+            else {
+                //remove color from others
+                if (titleDiv.classList.contains('active-gauge')) {
+                    titleDiv.classList.remove("active-gauge");
+                }
+            }
+        }
+
+    }
+
+    const handleCard = (id) => {
+        for (let i = 0; i < document.querySelectorAll('.div2').length; i++) {
+            let item = document.querySelectorAll('.div2')[i];
+            if (item.id.toString() == "active" + id.toString()) {
+                document.getElementById("active" + id.toString()).classList.add("div2-active");
+            }
+            else {
+                document.getElementById(item.id).classList.remove("div2-active");
+            }
+        }
+        for (let i = 0; i < document.querySelectorAll('.content').length; i++) {
+            let item = document.querySelectorAll('.content')[i];
+            if (item.id.toString() == "content" + id.toString()) {
+                document.getElementById("content" + id.toString()).classList.remove("d-none");
+                document.getElementById("content" + id.toString()).classList.add("d-block");
+            }
+            else {
+                document.getElementById(item.id).classList.remove("d-block");
+                document.getElementById(item.id).classList.add("d-none");
+
+            }
+        }
+    }
+
+    const handlelidashboard = (id, text) => {
+        for (let i = 0; i < document.querySelectorAll('.li-dashboard').length; i++) {
+            let item = document.querySelectorAll('.li-dashboard')[i];
+            if (item.id.toString() == "li" + id.toString()) {
+                document.getElementById("li" + id.toString()).classList.add("li-dashboard-active");
+                $('.hr-text-div2').html(text);
+            }
+            else {
+                document.getElementById(item.id).classList.remove("li-dashboard-active");
+            }
+        }
+    }
+
+    // const CreateLineSeries = (chart, field, name) => {
+    //     var series = chart.series.push(new am4charts.LineSeries());
+    //     series.dataFields.valueY = field;
+    //     series.dataFields.categoryX = "name";
+    //     series.strokeWidth = 2;
+    //     series.minBulletDistance = 10;
+    //     series.tooltipText = `${name} :[bold]{valueY}[/]`;
+    //     // series.tooltip.label.fontSize = 10;
+    //     series.name = name;
+    // }
+
+</script>
+<div class="content-wrapper">
+    <div style="display:flex ; justify-content:center">
+        <div class="new-main-cards-dashboard row">
+            <div style="display:flex ; justify-content:center">
+                <div style="display:flex ; grid-column-gap : 23px ; margin-left:40px ">
+                    <div>
+                        <div class="shadow-none-transition" onclick="handleCard(1)" id="card1">
+                            <div id="active1" class="div2 new-dashboard-card new-dashboard-card-zoomin cards-dashboard">
+                                <img src="/images/shaghayegh.png"
+                                     class="shaghayegh-img"
+                                     alt="logo" />
+                                <p class="shaghayegh-p">
+                                    مهندسی نرم افزار<span class="shaghayegh-span">شقایق</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="shadow-none-transition" onclick="handleCard(2)" id="card2">
+                            <div id="active2" class="div2 new-dashboard-card new-dashboard-card-zoomin cards-dashboard">
+                                <img src="/images/zirsakht.png"
+                                     class="zirsakht-img"
+                                     alt="logo" />
+                                <p class="zirsakht-p">
+                                    زیرساخت امن<span class="zirsakht-span">خدمات تراکنشی</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="shadow-none-transition" onclick="handleCard(3)" id="card3">
+                            <div id="active3" class="div2 new-dashboard-card new-dashboard-card-zoomin cards-dashboard">
+                                <img src="/images/behsazan.png"
+                                     class="behsazan-img"
+                                     alt="logo" />
+                                <p class="behsazan-p">
+                                    بهسازان ملت
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="shadow-none-transition" onclick="handleCard(4)" id="card4">
+                        <div id="active4" class=" big-circle div2 new-dashboard-card new-dashboard-card-zoomin cards-dashboard">
+                            <img src="/images/behsazanfarda.png"
+                                 class="behsazanfarda-img"
+                                 alt="logo" />
+                            <p class="behsazanfarda-p">
+                                گروه فن آوران هوشمند<span class="behsazanfarda-span">بهسازان فردا</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex; grid-column-gap : 23px ; margin-right:40px">
+                    <div>
+                        <div class="shadow-none-transition" onclick="handleCard(5)" id="card5">
+                            <div id="active5" class="div2 new-dashboard-card new-dashboard-card-zoomin cards-dashboard">
+                                <img src="/images/behpardakht.png"
+                                     class="behpardakht-img"
+                                     alt="logo" />
+                                <p class="behpardakht-p">
+                                    به پرداخت ملت
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="shadow-none-transition" onclick="handleCard(6)" id="card6">
+                            <div id="active6" class="div2 new-dashboard-card new-dashboard-card-zoomin cards-dashboard">
+                                <img src="/images/systemyaas.png"
+                                     class="systemyaas-img"
+                                     alt="logo" />
+                                <p class="systemyaas-p">
+                                    مهندسی سیستم <span class="systemyaas-span">یاس ارغوانی</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="shadow-none-transition" onclick="handleCard(7)" id="card7">
+                            <div id="active7" class="div2 new-dashboard-card new-dashboard-card-zoomin cards-dashboard">
+                                <img src="/images/sanayeyaas.png"
+                                     class="sanayeyaas-img"
+                                     alt="logo" />
+                                <p class="sanayeyaas-p">
+                                    مهندسی صنایع<span class="sanayeyaas-span">یاس ارغوانی</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="content0" class="content d-block contentstyle">
+        <div style="position:relative">
+            <div class="titlechart-div">
+                <p class="titlechart-p">توسعه کسب و کار</p>
+            </div>
+            <div class="row" style="margin-top:2.5rem ; padding-right:50px ; padding-left:10px">
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+            </div>
+        </div>
+        <div style="position:relative">
+            <div class="titlechart-div">
+                <p class="titlechart-p">مالی</p>
+            </div>
+            <div class="row" style="margin-top:1.5rem ; padding-right:50px ; padding-left:10px">
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+            </div>
+        </div>
+        <div style="position:relative">
+            <div class="titlechart-div">
+                <p class="titlechart-p">سرمایه گذاری</p>
+            </div>
+            <div class="row" style="margin-top:1.5rem ; padding-right:50px ; padding-left:10px">
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+            </div>
+        </div>
+        <div style="position:relative">
+            <div class="titlechart-div">
+                <p class="titlechart-p">طرح و برنامه</p>
+            </div>
+            <div class="row" style="margin-top:1.5rem ; padding-right:50px ; padding-left:10px">
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+            </div>
+        </div>
+        <div style="position:relative">
+            <div class="titlechart-div">
+                <p class="titlechart-p">منابع انسانی</p>
+            </div>
+            <div class="row" style="margin-top:1.5rem ; padding-right:50px ; padding-left:10px">
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+            </div>
+        </div>
+        <div style="position:relative">
+            <div class="titlechart-div">
+                <p class="titlechart-p">امنیت اطلاعات</p>
+            </div>
+            <div class="row" style="margin-top:1.5rem ; padding-right:50px ; padding-left:10px">
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+            </div>
+        </div>
+        <div style="position:relative">
+            <div class="titlechart-div">
+                <p class="titlechart-p">نوآوری</p>
+            </div>
+            <div class="row" style="margin-top:1.5rem ; padding-right:50px ; padding-left:10px">
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div id="content1" class="content d-none contentstyle">
+        <div class="row" style="margin-top:2.5rem ; padding-right:20px ; padding-left:20px">
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+            </div>
+        </div>
+        <div class="row" style="margin-top:1rem ; padding-right:20px ; padding-left:20px">
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+            </div>
+        </div>
+        <div style="display:flex ; justify-content:center"><div class="row hr-div"><div class="hr-text-div1">توسعه کسب و کار</div></div></div>
+        <div class="row" style="margin-top:1.5rem ; padding-right:20px ; padding-left:20px">
+            <div class="col-md-4">
+@*                 <div style="background-color:white ; box-shadow: 0px 1px 6px 0px gray ; direction:ltr; border-radius : 5px ; padding-top:30px ; margin-top:5px ; padding-bottom:20px">
+                    <div id="pie-div">
+                    </div>
+
+                </div> *@
+                @*  @await Html.PartialAsync("PieChart", piedata1); *@
+            </div>
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div style="margin-top:5px">
+                            <div class="emtiaz-div" style="background-color: #fe5252;"><p class="emtiaz-p">امتیاز یک</p></div>
+                            <div class="main-ul-div">
+                                <ul class="ul-dashboard">
+                                    <li class="li-dashboard" id="li1" onclick="handlelidashboard(1,'امنیت سازمان' )">امنیت سازمان</li>
+                                    <li class="li-dashboard" id="li2" onclick="handlelidashboard(2,'مدیریت حوادث سایبری')">مدیریت حوادث سایبری</li>
+                                    <li class="li-dashboard" id="li3" onclick="handlelidashboard(3,'آموزش و فرهنگ سازی')">آموزش و فرهنگ سازی</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="margin-top:5px">
+                            <div class="emtiaz-div" style="background-color:#d57240"><p class="emtiaz-p">امتیاز دو</p></div>
+                            <div class="main-ul-div">
+                                <ul class="ul-dashboard">
+                                    <li class="li-dashboard" id="li4" onclick="handlelidashboard(4,'مدیریت زنجیره تامین')">مدیریت زنجیره تامین</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div style="margin-top:12px">
+                            <div class="emtiaz-div" style="background-color:#f6ae2f"><p class="emtiaz-p">امتیاز سه</p></div>
+                            <div class="main-ul-div">
+                                <ul class="ul-dashboard">
+                                    <li class="li-dashboard" id="li5" onclick="handlelidashboard(5,'مدیریت تهدیدات بدافزاری')">مدیریت تهدیدات بدافزاری</li>
+                                    <li class="li-dashboard" id="li6" onclick="handlelidashboard(6,'زیرساخت محرمانگی')">زیرساخت محرمانگی</li>
+                                    <li class="li-dashboard" id="li7" onclick="handlelidashboard(7,'مدیریت هویت و دسترسی')">مدیریت هویت و دسترسی</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="margin-top:12px">
+                            <div class="emtiaz-div" style="background-color:#f2cf51"><p class="emtiaz-p">امتیاز چهار</p></div>
+                            <div class="main-ul-div">
+                                <ul class="ul-dashboard">
+                                    <li class="li-dashboard" id="li8" onclick="handlelidashboard(8,'مدیریت مخاطرات')">مدیریت مخاطرات</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div style="margin-top:12px">
+                            <div class="emtiaz-div" style="background-color:#44d536"><p class="emtiaz-p">امتیاز پنج</p></div>
+                            <div class="main-ul-div">
+                                <ul class="ul-dashboard">
+                                    <li class="li-dashboard" id="li9" onclick="handlelidashboard(9,'پایش و کنترل سایبری')">پایش و کنترل سایبری</li>
+                                    <li class="li-dashboard" id="li10" onclick="handlelidashboard(10,'مدیریت تداوم کسب و کار')">مدیریت تداوم کسب و کار</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex ; justify-content:center"><div class="row hr-div" style="margin-bottom:5px"><div class="hr-text-div2">امنیت سازمان</div></div></div>
+        <div class="row" style="margin-top:1.5rem ; padding-right:20px ; padding-left:20px">
+            <div class="col-md-6">
+            </div>
+            <div class="col-md-6">
+                <div class="table-dashboard">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr style="background-color:#9f9f9f">
+                                <th class="text-center th-dashboard">مقدار مقطع پیشین</th>
+                                <th class="text-center th-dashboard">مقدار مقطع فعلی</th>
+                                <th class="text-center th-dashboard">درصد تغییرات</th>
+                                <th class="text-center th-dashboard">وضعیت</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="tr-table-dash">
+                                <td class="text-center td-dashboard">1399/10/20</td>
+                                <td class="text-center td-dashboard">1400/6/15</td>
+                                <td class="text-center td-dashboard">5</td>
+                                <td class="text-center td-dashboard"><i class="mdi mdi-arrow-up arrowUp"></i></td>
+                            </tr>
+                            <tr class="tr-table-dash">
+                                <td class="text-center td-dashboard">1399/12/20</td>
+                                <td class="text-center td-dashboard">1400/3/30</td>
+                                <td class="text-center td-dashboard">5-</td>
+                                <td class="text-center td-dashboard"><i class="mdi mdi-arrow-down arrowDown"></i></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="content2" class='content d-none contentstyle'>
+    </div>
+    <div id="content3" class='content d-none contentstyle'>
+    </div>
+    <div id="content4" class='content d-none contentstyle'>
+    </div>
+    <div id="content5" class='content d-none contentstyle'>
+    </div>
+    <div id="content6" class='content d-none contentstyle'>
+    </div>
+    <div id="content7" class='content d-none contentstyle'>
+    </div>
+</div>
